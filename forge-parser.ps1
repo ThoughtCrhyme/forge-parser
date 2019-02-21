@@ -1,35 +1,48 @@
-$WindowsModuleList = ("registry", "dsc")
+$WindowsModuleList = ("acl", "chocolatey", "dsc", "dsc_lite", "iis", "powershell", "reboot", "registry", "scheduled_task", "sqlserver", "wsus_client")
 
-# Create a pwsh object from the forge api call to registry module
-$WebModuleResponse = Invoke-WebRequest "https://forgeapi.puppet.com/v3/releases?module=puppetlabs-" + $WindowsModuleList[0]
+$FileContent = "Module Name,Latest Version(LV),Downloads of LV,Total Downloads,Days on Forge,LV Days on Forge,Total DL/Day,LV DL/Day`n"
 
-$WebModuleObject = ConvertFrom-Json -InputObject $WebModuleResponse.Content
+foreach ($module in $WindowsModuleList) {
+  # Create a pwsh object from the forge api call to registry module
+  $WebModuleResponse = Invoke-WebRequest ("https://forgeapi.puppet.com/v3/releases?module=puppetlabs-" + $module)
 
-# Get the name of the module
-$ModuleName = $WebModuleObject.results."metadata"."name"[0]
+  $WebModuleObject = ConvertFrom-Json -InputObject $WebModuleResponse.Content
 
-# Date first version was created
-$WebModuleObject.results."created_at"[-1]
+  # Get the name of the module
+  $ModuleName = $WebModuleObject.results."metadata"."name"[0]
 
-# Days registry module has been on forge
-#$DateCreated = $WebModuleObject.results."created_at"[-1].subString(0, 19)
-$DateFirstOnForge = [datetime]::ParseExact($WebModuleObject.results."created_at"[-1].subString(0, 19),'yyyy-MM-dd HH:mm:ss',$null)
+  # Date first version was created
+  # $WebModuleObject.results."created_at"[-1]
 
-$TimeOnForge = NEW-TIMESPAN -End $DateFirstOnForge 
-$DaysOnForge = $TimeOnForge.days
+  # Days registry module has been on forge
+  #$DateCreated = $WebModuleObject.results."created_at"[-1].subString(0, 19)
+  $DateFirstOnForge = [datetime]::ParseExact($WebModuleObject.results."created_at"[-1].subString(0, 19),'yyyy-MM-dd HH:mm:ss',$null)
+  $LVDateFirstOnForge = [datetime]::ParseExact($WebModuleObject.results."created_at"[0].subString(0, 19),'yyyy-MM-dd HH:mm:ss',$null)
 
-# Get a list of version numbers for the registry module
-$VersionList = $WebModuleObject.results.version
+  $TimeOnForge = NEW-TIMESPAN -Start $DateFirstOnForge 
+  $LVTimeOnForge = NEW-TIMESPAN -Start $LVDateFirstOnForge 
+  $DaysOnForge = $TimeOnForge.days
+  $LVDaysOnForge = $LVTimeOnForge.days
 
-# Get a list of downloads for the registry module in order from highest version to lowest version
-$DownloadList = $WebModuleObject.results.downloads
+  # Get a list of version numbers for the registry module
+  $VersionList = $WebModuleObject.results.version
+  $LatestVersion = $VersionList[0]
 
-# Number of total downloads of registry module over all versions
-$TotalDownloads = ($WebModuleObject.results."downloads" | Measure-Object -Sum).sum
+  # Get a list of downloads for the registry module in order from highest version to lowest version
+  $DownloadList = $WebModuleObject.results.downloads
+  $LVDownloads = $DownloadList[0]
 
-#String of downloads per version
-[string]::Format($ModuleName + "`n")
-for($i = 0;  $i -le $VersionList.length; $i++) {
-  [string]::Format($VersionList[$i] + " " + $DownloadList[$i] + "`n")
+  # Number of total downloads of registry module over all versions
+  $TotalDownloads = ($WebModuleObject.results."downloads" | Measure-Object -Sum).sum
+
+  $DownloadsPerDay =  [math]::Round($TotalDownloads / $DaysOnForge)
+  $LVDownloadsPerDay =  [math]::Round($LVDownloads / $LVDaysOnForge)
+
+  #String of downloads per version
+  # [string]::Format($ModuleName + "`n")
+  # for($i = 0;  $i -le $VersionList.length; $i++) {
+  #   [string]::Format($VersionList[$i] + " " + $DownloadList[$i] + "`n")
+  # }
+  $FileContent += ($ModuleName + "," + $LatestVersion + "," + $LVDownloads + "," + $TotalDownloads + "," + $DaysOnForge + "," + $LVDaysOnForge + "," + $DownloadsPerDay + "," + $LVDownloadsPerDay + "`n")
 }
-[string]::Format("Total Downloads for puppetlabs-" + $ModuleName + " " + $TotalDownloads)
+$FileContent | Out-File -FilePath .\Report.csv
