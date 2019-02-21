@@ -11,13 +11,11 @@ foreach ($module in $WindowsModuleList) {
   # Get the name of the module
   $ModuleName = $WebModuleObject.results."metadata"."name"[0]
 
-  # Date first version was created
-  # $WebModuleObject.results."created_at"[-1]
-
   # Days registry module has been on forge
-  #$DateCreated = $WebModuleObject.results."created_at"[-1].subString(0, 19)
-  $DateFirstOnForge = [datetime]::ParseExact($WebModuleObject.results."created_at"[-1].subString(0, 19),'yyyy-MM-dd HH:mm:ss',$null)
-  $LVDateFirstOnForge = [datetime]::ParseExact($WebModuleObject.results."created_at"[0].subString(0, 19),'yyyy-MM-dd HH:mm:ss',$null)
+  $DateCreated = $WebModuleObject.results."created_at"[-1].subString(0, 19)
+  $LVDateCreated = $WebModuleObject.results."created_at"[0].subString(0, 19)
+  $DateFirstOnForge = [datetime]::ParseExact($DateCreated,'yyyy-MM-dd HH:mm:ss',$null)
+  $LVDateFirstOnForge = [datetime]::ParseExact($LVDateCreated,'yyyy-MM-dd HH:mm:ss',$null)
 
   $TimeOnForge = NEW-TIMESPAN -Start $DateFirstOnForge 
   $LVTimeOnForge = NEW-TIMESPAN -Start $LVDateFirstOnForge 
@@ -38,11 +36,6 @@ foreach ($module in $WindowsModuleList) {
   $DownloadsPerDay =  [math]::Round($TotalDownloads / $DaysOnForge)
   $LVDownloadsPerDay =  [math]::Round($LVDownloads / $LVDaysOnForge)
 
-  #String of downloads per version
-  # [string]::Format($ModuleName + "`n")
-  # for($i = 0;  $i -le $VersionList.length; $i++) {
-  #   [string]::Format($VersionList[$i] + " " + $DownloadList[$i] + "`n")
-  # }
   $FileContent += ($ModuleName + "," + $LatestVersion + "," + $LVDownloads + "," + $TotalDownloads + "," + $DaysOnForge + "," + $LVDaysOnForge + "," + $DownloadsPerDay + "," + $LVDownloadsPerDay + "`n")
 }
 $FileContent | Out-File -FilePath .\Report.csv
