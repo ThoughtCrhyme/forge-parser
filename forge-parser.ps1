@@ -34,8 +34,14 @@ foreach ($module in $WindowsModuleList) {
   $TotalDownloads = ($WebModuleObject.results."downloads" | Measure-Object -Sum).sum
 
   $DownloadsPerDay =  [math]::Round($TotalDownloads / $DaysOnForge)
-  $LVDownloadsPerDay =  [math]::Round($LVDownloads / $LVDaysOnForge)
+  if ($LVDaysOnForge -gt 0) {
+    $LVDownloadsPerDay =  [math]::Round($LVDownloads / $LVDaysOnForge)
+  }else {
+    $LVDownloadsPerDay =  0  
+  }
+  
 
   $FileContent += ($ModuleName + "," + $LatestVersion + "," + $LVDownloads + "," + $TotalDownloads + "," + $DaysOnForge + "," + $LVDaysOnForge + "," + $DownloadsPerDay + "," + $LVDownloadsPerDay + "`n")
 }
 $FileContent | Out-File -FilePath .\Report.csv
+ 
