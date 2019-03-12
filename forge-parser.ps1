@@ -43,5 +43,8 @@ foreach ($module in $WindowsModuleList) {
 
   $FileContent += ($ModuleName + "," + $LatestVersion + "," + $LVDownloads + "," + $TotalDownloads + "," + $DaysOnForge + "," + $LVDaysOnForge + "," + $DownloadsPerDay + "," + $LVDownloadsPerDay + "`n")
 }
-$FileContent | Out-File -FilePath .\Report.csv
+
+$TimeStamp = Get-Date -UFormat "%Y-%m-%d"
+$ReportName = "Report" + $TimeStamp + ".csv"
+$FileContent | Out-File -FilePath .\$ReportName
  
